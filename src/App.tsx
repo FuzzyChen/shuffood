@@ -1,7 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import './App.css'
-import { searchNearbyRestaurants, shuffleArray, filterByDistance, filterByCuisine, filterByRating, CUISINE_FILTERS } from './utils/api'
+import { Box, Container, Paper } from '@mui/material'
+import { searchNearbyRestaurants, shuffleArray, filterByDistance, filterByCuisine, filterByRating } from './utils/api'
 import type { Restaurant } from './utils/api'
+import { MapDisplay } from './components/MapDisplay'
+import { DistanceFilter } from './components/DistanceFilter'
+import { RatingFilter } from './components/RatingFilter'
+import { CuisineFilter } from './components/CuisineFilter'
+import { RestaurantCard } from './components/RestaurantCard'
+import { RestaurantList } from './components/RestaurantList'
+import { ErrorDisplay } from './components/ErrorDisplay'
+import { ControlButtons } from './components/ControlButtons'
 
 function App() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
@@ -12,10 +20,9 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [latitude, setLatitude] = useState<number | null>(null)
   const [longitude, setLongitude] = useState<number | null>(null)
-  const [distanceRange, setDistanceRange] = useState<number>(10) // in miles
+  const [distanceRange, setDistanceRange] = useState<number>(10)
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([])
   const [minRating, setMinRating] = useState<number>(0)
-  const [showCuisineDropdown, setShowCuisineDropdown] = useState(false)
   const shuffleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Get user's current location
@@ -172,168 +179,82 @@ function App() {
   }, [filteredRestaurants, handleShuffle])
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>🍽️ Shuffood</h1>
-        <p>Can't decide what to eat? Let's shuffle!</p>
-      </header>
+    <Box sx={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          py: 3,
+          textAlign: 'center',
+          boxShadow: 2,
+          mb: 3,
+        }}
+      >
+        <Box component="h1" sx={{ margin: 0, fontSize: '2.5rem', fontWeight: 'bold' }}>
+          🍽️ Shuffood
+        </Box>
+        <Box component="p" sx={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', opacity: 0.9 }}>
+          Can't decide what to eat? Let's shuffle!
+        </Box>
+      </Box>
 
-      <main className="app-main">
-        {error && <div className="error-message">{error}</div>}
+      {/* Main Content */}
+      <Container maxWidth="sm" sx={{ pb: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Error Display */}
+          <Box>
+            <ErrorDisplay error={error} />
+          </Box>
 
-        {latitude && longitude && import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
-          <div className="map-container">
-            <iframe
-              title="Current Location Map"
-              width="100%"
-              height="250"
-              style={{ border: 0, borderRadius: '12px' }}
-              src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${latitude},${longitude}&zoom=15`}
-              allowFullScreen={true}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
+          {/* Map */}
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <MapDisplay latitude={latitude} longitude={longitude} apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} />
+          </Box>
+
+          {/* Filters */}
+          <Box>
+            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <DistanceFilter value={distanceRange} onChange={handleDistanceChange} />
+              <RatingFilter value={minRating} onChange={handleRatingChange} />
+              <CuisineFilter selectedCuisines={selectedCuisines} onToggle={handleCuisineToggle} />
+            </Paper>
+          </Box>
+
+          {/* Control Buttons */}
+          <Box>
+            <ControlButtons
+              restaurantsCount={filteredRestaurants.length}
+              totalCount={restaurants.length}
+              loading={loading}
+              isShuffling={isShuffling}
+              onSearch={handleSearchRestaurants}
+              onShuffle={handleNewShuffle}
             />
-          </div>
-        )}
+          </Box>
 
-        <div className="controls">
-
-          <div className="filter-section filter-section-compact">
-            <label htmlFor="distance-range" className="filter-label filter-label-small">
-              🎯 Distance: {distanceRange} mi
-            </label>
-            <input
-              id="distance-range"
-              type="range"
-              min="1"
-              max="30"
-              step="1"
-              value={distanceRange}
-              onChange={(e) => handleDistanceChange(Number(e.target.value))}
-              className="distance-slider"
-            />
-          </div>
-
-          <div className="filter-section filter-section-compact">
-            <label htmlFor="min-rating" className="filter-label filter-label-small">
-              ⭐ Min Rating: {minRating > 0 ? minRating : 'Any'}
-            </label>
-            <select
-              id="min-rating"
-              value={minRating}
-              onChange={(e) => handleRatingChange(Number(e.target.value))}
-              className="rating-select"
-            >
-              <option value="0">All ratings</option>
-              <option value="3">3+ stars</option>
-              <option value="3.5">3.5+ stars</option>
-              <option value="4">4+ stars</option>
-              <option value="4.5">4.5+ stars</option>
-            </select>
-          </div>
-
-          <div className="filter-section filter-section-compact">
-            <label htmlFor="cuisine-dropdown" className="filter-label filter-label-small">
-              🍽️ Don't show: {selectedCuisines.length > 0 ? selectedCuisines.length : 'None'}
-            </label>
-            <div className="dropdown-container">
-              <button
-                id="cuisine-dropdown"
-                onClick={() => setShowCuisineDropdown(!showCuisineDropdown)}
-                className="dropdown-toggle"
-              >
-                {selectedCuisines.length === 0 ? 'Select cuisines to exclude' : `${selectedCuisines.length} selected`}
-              </button>
-              {showCuisineDropdown && (
-                <div className="dropdown-menu">
-                  {CUISINE_FILTERS.map((cuisine) => (
-                    <label key={cuisine.value} className="dropdown-item">
-                      <input
-                        type="checkbox"
-                        checked={selectedCuisines.includes(cuisine.value)}
-                        onChange={() => handleCuisineToggle(cuisine.value)}
-                      />
-                      <span>{cuisine.label}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={handleSearchRestaurants}
-            disabled={loading}
-            className="btn btn-primary"
-          >
-            {loading ? 'Searching...' : 'Find Restaurants'}
-          </button>
-
-          {filteredRestaurants.length > 0 && (
-            <>
-              <p className="restaurant-count">
-                Found {filteredRestaurants.length} of {restaurants.length} restaurants
-              </p>
-              <button onClick={handleNewShuffle} disabled={isShuffling} className="btn btn-secondary">
-                {isShuffling ? '🎲 Shuffling...' : '🎲 Shuffle'}
-              </button>
-            </>
+          {/* Restaurant Card */}
+          {selectedRestaurant && (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <RestaurantCard
+                restaurant={selectedRestaurant}
+                isShuffling={isShuffling}
+                onShuffle={handleNewShuffle}
+              />
+            </Box>
           )}
-        </div>
 
-        {selectedRestaurant && (
-          <div className="restaurant-card">
-            <div className="restaurant-content">
-              <h2>{selectedRestaurant.name}</h2>
-              <p className="address">{selectedRestaurant.address}</p>
-              <div className="restaurant-details">
-                {selectedRestaurant.rating > 0 && (
-                  <p className="rating">⭐ {selectedRestaurant.rating.toFixed(1)}</p>
-                )}
-                {selectedRestaurant.distance && (
-                  <p className="distance">📍 {selectedRestaurant.distance.toFixed(1)} miles away</p>
-                )}
-              </div>
-              <div className="actions">
-                <button onClick={handleNewShuffle} disabled={isShuffling} className="btn btn-shuffle">
-                  {isShuffling ? '🎲 Shuffling...' : 'Try Another'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {filteredRestaurants.length > 0 && !selectedRestaurant && (
-          <div className="empty-state">
-            <p>Click the shuffle button to pick a restaurant!</p>
-          </div>
-        )}
-
-        {filteredRestaurants.length > 0 && (
-          <div className="restaurant-list-section">
-            <h3 className="list-title">📋 Available Restaurants</h3>
-            <div className="restaurant-list">
-              {filteredRestaurants.map((restaurant, index) => (
-                <div
-                  key={restaurant.place_id}
-                  className={`restaurant-list-item ${selectedRestaurant?.place_id === restaurant.place_id ? 'active' : ''}`}
-                  onClick={() => setSelectedRestaurant(restaurant)}
-                >
-                  <div className="list-item-header">
-                    <span className="list-item-number">{index + 1}</span>
-                    <h4 className="list-item-name">{restaurant.name}</h4>
-                  </div>
-                  <p className="list-item-distance">{restaurant.distance?.toFixed(1)} mi</p>
-                  {restaurant.rating > 0 && (
-                    <span className="list-item-rating">⭐ {restaurant.rating.toFixed(1)}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+          {/* Restaurant List */}
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <RestaurantList
+              restaurants={filteredRestaurants}
+              selectedRestaurant={selectedRestaurant}
+              onSelect={setSelectedRestaurant}
+            />
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   )
 }
 
