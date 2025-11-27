@@ -19,7 +19,7 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
       </Typography>
       <Paper
         sx={{
-          maxHeight: 200,
+          maxHeight: 400,
           overflowY: 'auto',
           p: 1,
         }}

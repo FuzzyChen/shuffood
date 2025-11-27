@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Box, Container, Paper } from '@mui/material'
-import { searchNearbyRestaurants, shuffleArray, filterByDistance, filterByCuisine, filterByRating } from './utils/api'
+import { searchNearbyRestaurants, shuffleArray, filterByDistance } from './utils/api'
 import type { Restaurant } from './utils/api'
-import { MapDisplay } from './components/MapDisplay'
 import { DistanceFilter } from './components/DistanceFilter'
 import { RatingFilter } from './components/RatingFilter'
 import { CuisineFilter } from './components/CuisineFilter'
@@ -51,93 +50,7 @@ function App() {
     }
   }, [])
 
-  const handleSearchRestaurants = useCallback(async () => {
-    if (!latitude || !longitude) {
-      setError('Location not available')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    try {
-      const results = await searchNearbyRestaurants(latitude, longitude, distanceRange)
-      setRestaurants(results)
-      let filtered = filterByDistance(results, distanceRange)
-      // Apply rating filter
-      if (minRating > 0) {
-        filtered = filterByRating(filtered, minRating)
-      }
-      // Apply cuisine exclusion filter if selected
-      if (selectedCuisines.length > 0) {
-        filtered = filterByCuisine(filtered, selectedCuisines)
-      }
-      setFilteredRestaurants(filtered)
-      setSelectedRestaurant(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search restaurants')
-    } finally {
-      setLoading(false)
-    }
-  }, [latitude, longitude, distanceRange, selectedCuisines, minRating])
-
-  const handleDistanceChange = useCallback(
-    (newDistance: number) => {
-      setDistanceRange(newDistance)
-      let filtered = filterByDistance(restaurants, newDistance)
-      // Apply rating filter
-      if (minRating > 0) {
-        filtered = filterByRating(filtered, minRating)
-      }
-      // Apply cuisine exclusion filter if selected
-      if (selectedCuisines.length > 0) {
-        filtered = filterByCuisine(filtered, selectedCuisines)
-      }
-      setFilteredRestaurants(filtered)
-      setSelectedRestaurant(null)
-    },
-    [restaurants, selectedCuisines, minRating]
-  )
-
-  const handleCuisineToggle = useCallback(
-    (cuisine: string) => {
-      setSelectedCuisines((prev) => {
-        const updated = prev.includes(cuisine) ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
-        // Update filtered results immediately
-        let filtered = filterByDistance(restaurants, distanceRange)
-        // Apply rating filter
-        if (minRating > 0) {
-          filtered = filterByRating(filtered, minRating)
-        }
-        // Apply cuisine exclusion filter if selected
-        if (updated.length > 0) {
-          filtered = filterByCuisine(filtered, updated)
-        }
-        setFilteredRestaurants(filtered)
-        setSelectedRestaurant(null)
-        return updated
-      })
-    },
-    [restaurants, distanceRange, minRating]
-  )
-
-  const handleRatingChange = useCallback(
-    (newRating: number) => {
-      setMinRating(newRating)
-      let filtered = filterByDistance(restaurants, distanceRange)
-      // Apply rating filter
-      if (newRating > 0) {
-        filtered = filterByRating(filtered, newRating)
-      }
-      // Apply cuisine exclusion filter if selected
-      if (selectedCuisines.length > 0) {
-        filtered = filterByCuisine(filtered, selectedCuisines)
-      }
-      setFilteredRestaurants(filtered)
-      setSelectedRestaurant(null)
-    },
-    [restaurants, distanceRange, selectedCuisines]
-  )
-
+  // Shuffle animation - defined first since other handlers depend on it
   const handleShuffle = useCallback(() => {
     if (filteredRestaurants.length === 0) {
       setError('No restaurants to shuffle')
@@ -172,11 +85,67 @@ function App() {
     }, 100) // Update every 100ms for smooth animation
   }, [filteredRestaurants])
 
-  const handleNewShuffle = useCallback(() => {
-    if (filteredRestaurants.length > 0) {
+  // Search restaurants when filters change
+  const handleSearch = useCallback(async () => {
+    if (!latitude || !longitude) {
+      setError('Location not available')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      // Pass filters directly to the API
+      const results = await searchNearbyRestaurants(latitude, longitude, distanceRange, selectedCuisines, minRating)
+      setRestaurants(results)
+      // Distance filtering is still applied client-side for real-time adjustments
+      const filtered = filterByDistance(results, distanceRange)
+      setFilteredRestaurants(filtered)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search restaurants')
+    } finally {
+      setLoading(false)
+    }
+  }, [latitude, longitude, distanceRange, selectedCuisines, minRating])
+
+  // Shuffle from current filtered results (no API call)
+  const handleSearchAndShuffle = useCallback(async () => {
+    if (filteredRestaurants.length === 0) {
+      // If no restaurants yet, do a search first
+      await handleSearch()
+      // After search completes, shuffle
+      handleShuffle()
+    } else {
+      // If we already have results, just shuffle
       handleShuffle()
     }
-  }, [filteredRestaurants, handleShuffle])
+  }, [filteredRestaurants, handleSearch, handleShuffle])
+
+  const handleDistanceChange = useCallback(
+    (newDistance: number) => {
+      setDistanceRange(newDistance)
+    },
+    []
+  )
+
+  const handleCuisineToggle = useCallback(
+    (cuisine: string) => {
+      setSelectedCuisines((prev) => {
+        const updated = prev.includes(cuisine) ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
+        return updated
+      })
+    },
+    []
+  )
+
+  const handleRatingChange = useCallback(
+    (newRating: number) => {
+      setMinRating(newRating)
+    },
+    []
+  )
+
+
 
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
@@ -185,17 +154,17 @@ function App() {
         sx={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          py: 3,
+          py: 1.5,
           textAlign: 'center',
           boxShadow: 2,
-          mb: 3,
+          mb: 2,
         }}
       >
-        <Box component="h1" sx={{ margin: 0, fontSize: '2.5rem', fontWeight: 'bold' }}>
+        <Box component="h1" sx={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold' }}>
           🍽️ Shuffood
         </Box>
-        <Box component="p" sx={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', opacity: 0.9 }}>
-          Can't decide what to eat? Let's shuffle!
+        <Box component="p" sx={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', opacity: 0.9 }}>
+          Can't decide? Shuffle!
         </Box>
       </Box>
 
@@ -207,44 +176,42 @@ function App() {
             <ErrorDisplay error={error} />
           </Box>
 
-          {/* Map */}
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <MapDisplay latitude={latitude} longitude={longitude} apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} />
-          </Box>
+          {/* Location Info */}
+          {latitude && longitude && (
+            <Box sx={{ color: 'white', textAlign: 'center', fontSize: '0.9rem', opacity: 0.8 }}>
+              📍 Searching around your location ({latitude.toFixed(4)}, {longitude.toFixed(4)})
+            </Box>
+          )}
 
           {/* Filters */}
           <Box>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Paper sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <DistanceFilter value={distanceRange} onChange={handleDistanceChange} />
               <RatingFilter value={minRating} onChange={handleRatingChange} />
               <CuisineFilter selectedCuisines={selectedCuisines} onToggle={handleCuisineToggle} />
             </Paper>
           </Box>
 
-          {/* Control Buttons */}
-          <Box>
+          {/* Control Buttons - Sticky to keep visible */}
+          <Box sx={{ position: 'sticky', top: 20, zIndex: 10 }}>
             <ControlButtons
               restaurantsCount={filteredRestaurants.length}
               totalCount={restaurants.length}
               loading={loading}
               isShuffling={isShuffling}
-              onSearch={handleSearchRestaurants}
-              onShuffle={handleNewShuffle}
+              onSearch={handleSearchAndShuffle}
+              onShuffle={handleShuffle}
             />
           </Box>
 
           {/* Restaurant Card */}
           {selectedRestaurant && (
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <RestaurantCard
-                restaurant={selectedRestaurant}
-                isShuffling={isShuffling}
-                onShuffle={handleNewShuffle}
-              />
+              <RestaurantCard restaurant={selectedRestaurant} />
             </Box>
           )}
 
-          {/* Restaurant List */}
+          {/* Restaurant List - Enlarged */}
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <RestaurantList
               restaurants={filteredRestaurants}

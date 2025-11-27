@@ -15,13 +15,12 @@ export function ControlButtons({
   loading,
   isShuffling,
   onSearch,
-  onShuffle,
 }: ControlButtonsProps) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', alignItems: 'center' }}>
       <Button
         onClick={onSearch}
-        disabled={loading}
+        disabled={loading || isShuffling}
         variant="contained"
         fullWidth
         sx={{
@@ -30,10 +29,11 @@ export function ControlButtons({
           color: 'white',
           textTransform: 'none',
           fontWeight: 'bold',
-          py: 1,
+          py: 1.5,
+          fontSize: '1rem',
         }}
       >
-        {loading ? 'Searching...' : 'Find Restaurants'}
+        {loading ? '🔍 Searching...' : isShuffling ? '🎲 Shuffling...' : '🎲 Find & Shuffle'}
       </Button>
 
       {restaurantsCount > 0 && (
@@ -41,22 +41,6 @@ export function ControlButtons({
           <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
             Found {restaurantsCount} of {totalCount} restaurants
           </Typography>
-          <Button
-            onClick={onShuffle}
-            disabled={isShuffling}
-            variant="contained"
-            fullWidth
-            sx={{
-              maxWidth: 300,
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 'bold',
-              py: 1,
-            }}
-          >
-            {isShuffling ? '🎲 Shuffling...' : '🎲 Shuffle'}
-          </Button>
         </>
       )}
     </Box>

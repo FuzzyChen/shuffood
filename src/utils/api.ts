@@ -8,6 +8,11 @@ export interface Restaurant {
   lng: number
   distance?: number // in miles
   cuisines?: string[] // Restaurant cuisine types
+  types?: string[] // Restaurant types (e.g., 'italian_restaurant', 'sushi_restaurant')
+  addressDescriptor?: {
+    landmarks?: Array<{ landmark: string }>
+    areaName?: string
+  }
 }
 
 export const CUISINE_FILTERS = [
@@ -26,6 +31,21 @@ export const CUISINE_FILTERS = [
 ]
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+
+const CUISINE_KEYWORDS: Record<string, string[]> = {
+  mexican: ['mexican', 'taco', 'taqueria', 'burrito', 'qdoba', 'chipotle'],
+  chinese: ['chinese', 'peking', 'szechuan', 'sichuan', 'dim sum', 'wok'],
+  italian: ['italian', 'pizza', 'pasta', 'trattoria', 'pizzeria'],
+  japanese: ['japanese', 'sushi', 'ramen', 'tempura', 'tonkatsu'],
+  indian: ['indian', 'curry', 'tandoor', 'naan', 'pakora'],
+  thai: ['thai', 'pad thai'],
+  korean: ['korean', 'bbq', 'kimchi'],
+  vietnamese: ['vietnamese', 'pho', 'banh mi'],
+  spanish: ['spanish', 'tapas', 'paella'],
+  french: ['french', 'bistro', 'brasserie'],
+  american: ['american', 'burger', 'steakhouse', 'bbq', 'grille'],
+  middle_eastern: ['middle eastern', 'mediterranean', 'kebab', 'hummus', 'falafel'],
+}
 
 /**
  * Convert miles to meters
@@ -62,11 +82,14 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 /**
  * Search for nearby restaurants using Google Places API (New)
  * Uses the new Places API searchNearby endpoint
+ * Applies cuisine exclusion and rating filters
  */
 export async function searchNearbyRestaurants(
   latitude: number,
   longitude: number,
-  radiusMiles: number = 10 // 10 miles radius
+  radiusMiles: number = 10, // 10 miles radius
+  excludedCuisines: string[] = [],
+  minRating: number = 0
 ): Promise<Restaurant[]> {
   if (!API_KEY) {
     throw new Error('Google Maps API key not configured. Please set VITE_GOOGLE_MAPS_API_KEY environment variable.')
@@ -83,7 +106,7 @@ export async function searchNearbyRestaurants(
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': API_KEY,
-          'X-Goog-FieldMask': 'places.displayName,places.id,places.formattedAddress,places.rating,places.location',
+          'X-Goog-FieldMask': 'places.displayName,places.id,places.formattedAddress,places.rating,places.location,places.addressDescriptor,places.types',
         },
         body: JSON.stringify({
           locationRestriction: {
@@ -96,8 +119,16 @@ export async function searchNearbyRestaurants(
             },
           },
           includedTypes: ['restaurant'],
+          excludedTypes: [
+            'primary_school',
+            'secondary_school',
+            'movie_theater',
+            'shopping_mall',
+            'grocery_store',
+          ],
           maxResultCount: 20,
           languageCode: 'en',
+          rankPreference: 'DISTANCE',
         }),
       }
     )
@@ -110,24 +141,48 @@ export async function searchNearbyRestaurants(
     const data = await response.json()
     const places = data.places || []
 
-    const restaurants: Restaurant[] = places.map((place: any) => {
-      const distance = calculateDistance(
-        latitude,
-        longitude,
-        place.location.latitude,
-        place.location.longitude
-      )
-      return {
-        place_id: place.id || place.name || '',
-        name: place.displayName?.text || place.name || '',
-        address: place.formattedAddress || '',
-        rating: place.rating || 0,
-        lat: place.location.latitude,
-        lng: place.location.longitude,
-        distance,
-        photos: place.photos?.map((photo: any) => photo.name),
-      }
-    })
+    const restaurants: Restaurant[] = places
+      .map((place: any) => {
+        const distance = calculateDistance(
+          latitude,
+          longitude,
+          place.location.latitude,
+          place.location.longitude
+        )
+        return {
+          place_id: place.id || place.name || '',
+          name: place.displayName?.text || place.name || '',
+          address: place.formattedAddress || '',
+          rating: place.rating || 0,
+          lat: place.location.latitude,
+          lng: place.location.longitude,
+          distance,
+          photos: place.photos?.map((photo: any) => photo.name),
+          types: place.types || [],
+          addressDescriptor: place.addressDescriptor,
+        }
+      })
+      .filter((restaurant: Restaurant) => {
+        // Filter by minimum rating
+        if (minRating > 0 && (restaurant.rating || 0) < minRating) {
+          return false
+        }
+
+        // Filter by excluded cuisines
+        if (excludedCuisines.length > 0) {
+          const restaurantNameLower = restaurant.name.toLowerCase()
+          // EXCLUDE restaurants that match any of the selected cuisines
+          if (
+            excludedCuisines.some((cuisine) =>
+              (CUISINE_KEYWORDS[cuisine] || []).some((keyword) => restaurantNameLower.includes(keyword))
+            )
+          ) {
+            return false
+          }
+        }
+
+        return true
+      })
 
     return restaurants
   } catch (error) {
@@ -149,26 +204,11 @@ export function filterByDistance(restaurants: Restaurant[], maxDistanceMiles: nu
 export function filterByCuisine(restaurants: Restaurant[], excludedCuisines: string[]): Restaurant[] {
   if (excludedCuisines.length === 0) return restaurants
 
-  const cuisineKeywords: Record<string, string[]> = {
-    mexican: ['mexican', 'taco', 'taqueria', 'burrito', 'qdoba', 'chipotle'],
-    chinese: ['chinese', 'peking', 'szechuan', 'sichuan', 'dim sum', 'wok'],
-    italian: ['italian', 'pizza', 'pasta', 'trattoria', 'pizzeria'],
-    japanese: ['japanese', 'sushi', 'ramen', 'tempura', 'tonkatsu'],
-    indian: ['indian', 'curry', 'tandoor', 'naan', 'pakora'],
-    thai: ['thai', 'pad thai'],
-    korean: ['korean', 'bbq', 'kimchi'],
-    vietnamese: ['vietnamese', 'pho', 'banh mi'],
-    spanish: ['spanish', 'tapas', 'paella'],
-    french: ['french', 'bistro', 'brasserie'],
-    american: ['american', 'burger', 'steakhouse', 'bbq', 'grille'],
-    middle_eastern: ['middle eastern', 'mediterranean', 'kebab', 'hummus', 'falafel'],
-  }
-
   return restaurants.filter((restaurant) => {
     const restaurantNameLower = restaurant.name.toLowerCase()
     // EXCLUDE restaurants that match any of the selected cuisines
     return !excludedCuisines.some((cuisine) =>
-      (cuisineKeywords[cuisine] || []).some((keyword) => restaurantNameLower.includes(keyword))
+      (CUISINE_KEYWORDS[cuisine] || []).some((keyword) => restaurantNameLower.includes(keyword))
     )
   })
 }
