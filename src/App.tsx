@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Box, Container, Paper } from '@mui/material'
-import { searchNearbyRestaurants, shuffleArray, filterByDistance } from './utils/api'
+import { searchNearbyRestaurants, shuffleArray, filterByDistance, getCityFromCoordinates } from './utils/api'
 import type { Restaurant } from './utils/api'
 import { DistanceFilter } from './components/DistanceFilter'
 import { RatingFilter } from './components/RatingFilter'
@@ -19,26 +19,55 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [latitude, setLatitude] = useState<number | null>(null)
   const [longitude, setLongitude] = useState<number | null>(null)
+  const [cityName, setCityName] = useState<string>('')
   const [distanceRange, setDistanceRange] = useState<number>(10)
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([])
   const [minRating, setMinRating] = useState<number>(0)
   const shuffleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const shouldShuffleAfterSearchRef = useRef(false)
 
   // Get user's current location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLatitude(position.coords.latitude)
-          setLongitude(position.coords.longitude)
-        },
-        () => {
-          // Default to San Francisco if geolocation fails
-          setLatitude(37.7749)
-          setLongitude(-122.4194)
-        }
-      )
+    const initLocation = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lat = position.coords.latitude
+            const lng = position.coords.longitude
+            console.log('Geolocation success:', lat, lng)
+            setLatitude(lat)
+            setLongitude(lng)
+            // Get city name
+            const city = await getCityFromCoordinates(lat, lng)
+            console.log('City name:', city)
+            setCityName(city)
+          },
+          async (error) => {
+            console.log('Geolocation error:', error.message)
+            // Default to San Francisco if geolocation fails
+            const lat = 37.7749
+            const lng = -122.4194
+            setLatitude(lat)
+            setLongitude(lng)
+            const city = await getCityFromCoordinates(lat, lng)
+            console.log('Fallback city name:', city)
+            setCityName(city)
+          }
+        )
+      } else {
+        console.log('Geolocation not available')
+        // If geolocation is not available, default to San Francisco
+        const lat = 37.7749
+        const lng = -122.4194
+        setLatitude(lat)
+        setLongitude(lng)
+        const city = await getCityFromCoordinates(lat, lng)
+        console.log('No geolocation city name:', city)
+        setCityName(city)
+      }
     }
+
+    initLocation()
   }, [])
 
   // Cleanup interval on component unmount
@@ -50,10 +79,9 @@ function App() {
     }
   }, [])
 
-  // Shuffle animation - defined first since other handlers depend on it
+  // Shuffle animation
   const handleShuffle = useCallback(() => {
     if (filteredRestaurants.length === 0) {
-      setError('No restaurants to shuffle')
       return
     }
 
@@ -85,7 +113,7 @@ function App() {
     }, 100) // Update every 100ms for smooth animation
   }, [filteredRestaurants])
 
-  // Search restaurants when filters change
+  // Search restaurants
   const handleSearch = useCallback(async () => {
     if (!latitude || !longitude) {
       setError('Location not available')
@@ -108,22 +136,35 @@ function App() {
     }
   }, [latitude, longitude, distanceRange, selectedCuisines, minRating])
 
-  // Shuffle from current filtered results (no API call)
+  // Button click handler: Search if empty, then shuffle. Otherwise just shuffle.
   const handleSearchAndShuffle = useCallback(async () => {
     if (filteredRestaurants.length === 0) {
-      // If no restaurants yet, do a search first
+      // First time or after filter change - search then shuffle
+      shouldShuffleAfterSearchRef.current = true
       await handleSearch()
-      // After search completes, shuffle
-      handleShuffle()
     } else {
-      // If we already have results, just shuffle
+      // Already have results - just shuffle
       handleShuffle()
     }
-  }, [filteredRestaurants, handleSearch, handleShuffle])
+  }, [filteredRestaurants.length, handleSearch, handleShuffle])
 
+  // Auto-shuffle after search completes
+  useEffect(() => {
+    if (shouldShuffleAfterSearchRef.current && filteredRestaurants.length > 0 && !loading) {
+      shouldShuffleAfterSearchRef.current = false
+      handleShuffle()
+    }
+  }, [filteredRestaurants, loading, handleShuffle])
+
+
+
+  // Clear restaurants when filters change
   const handleDistanceChange = useCallback(
     (newDistance: number) => {
       setDistanceRange(newDistance)
+      setRestaurants([])
+      setFilteredRestaurants([])
+      setSelectedRestaurant(null)
     },
     []
   )
@@ -134,6 +175,9 @@ function App() {
         const updated = prev.includes(cuisine) ? prev.filter((c) => c !== cuisine) : [...prev, cuisine]
         return updated
       })
+      setRestaurants([])
+      setFilteredRestaurants([])
+      setSelectedRestaurant(null)
     },
     []
   )
@@ -141,6 +185,9 @@ function App() {
   const handleRatingChange = useCallback(
     (newRating: number) => {
       setMinRating(newRating)
+      setRestaurants([])
+      setFilteredRestaurants([])
+      setSelectedRestaurant(null)
     },
     []
   )
@@ -177,9 +224,9 @@ function App() {
           </Box>
 
           {/* Location Info */}
-          {latitude && longitude && (
+          {cityName && (
             <Box sx={{ color: 'white', textAlign: 'center', fontSize: '0.9rem', opacity: 0.8 }}>
-              📍 Searching around your location ({latitude.toFixed(4)}, {longitude.toFixed(4)})
+              📍 {cityName}
             </Box>
           )}
 

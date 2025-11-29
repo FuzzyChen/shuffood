@@ -16,35 +16,71 @@ export interface Restaurant {
 }
 
 export const CUISINE_FILTERS = [
-  { label: 'Mexican', value: 'mexican' },
-  { label: 'Chinese', value: 'chinese' },
-  { label: 'Italian', value: 'italian' },
-  { label: 'Japanese', value: 'japanese' },
-  { label: 'Indian', value: 'indian' },
-  { label: 'Thai', value: 'thai' },
-  { label: 'Korean', value: 'korean' },
-  { label: 'Vietnamese', value: 'vietnamese' },
-  { label: 'Spanish', value: 'spanish' },
-  { label: 'French', value: 'french' },
-  { label: 'American', value: 'american' },
-  { label: 'Middle Eastern', value: 'middle_eastern' },
+  { label: 'Mexican', value: 'mexican_restaurant' },
+  { label: 'Chinese', value: 'chinese_restaurant' },
+  { label: 'Italian', value: 'italian_restaurant' },
+  { label: 'Japanese', value: 'japanese_restaurant' },
+  { label: 'Indian', value: 'indian_restaurant' },
+  { label: 'Thai', value: 'thai_restaurant' },
+  { label: 'Korean', value: 'korean_restaurant' },
+  { label: 'Vietnamese', value: 'vietnamese_restaurant' },
+  { label: 'Spanish', value: 'spanish_restaurant' },
+  { label: 'French', value: 'french_restaurant' },
+  { label: 'American', value: 'american_restaurant' },
+  { label: 'Middle Eastern', value: 'middle_eastern_restaurant' },
 ]
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
-const CUISINE_KEYWORDS: Record<string, string[]> = {
-  mexican: ['mexican', 'taco', 'taqueria', 'burrito', 'qdoba', 'chipotle'],
-  chinese: ['chinese', 'peking', 'szechuan', 'sichuan', 'dim sum', 'wok'],
-  italian: ['italian', 'pizza', 'pasta', 'trattoria', 'pizzeria'],
-  japanese: ['japanese', 'sushi', 'ramen', 'tempura', 'tonkatsu'],
-  indian: ['indian', 'curry', 'tandoor', 'naan', 'pakora'],
-  thai: ['thai', 'pad thai'],
-  korean: ['korean', 'bbq', 'kimchi'],
-  vietnamese: ['vietnamese', 'pho', 'banh mi'],
-  spanish: ['spanish', 'tapas', 'paella'],
-  french: ['french', 'bistro', 'brasserie'],
-  american: ['american', 'burger', 'steakhouse', 'bbq', 'grille'],
-  middle_eastern: ['middle eastern', 'mediterranean', 'kebab', 'hummus', 'falafel'],
+/**
+ * Get city name from coordinates using reverse geocoding
+ */
+export async function getCityFromCoordinates(latitude: number, longitude: number): Promise<string> {
+  console.log('getCityFromCoordinates called with:', latitude, longitude)
+  console.log('API_KEY exists:', !!API_KEY)
+
+  if (!API_KEY) {
+    console.log('No API key, returning coordinates')
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  }
+
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      console.error('Geocoding API response not ok:', response.status)
+      throw new Error('Failed to get location')
+    }
+
+    const data = await response.json()
+    console.log('Geocoding API response:', data)
+
+    if (data.results && data.results.length > 0) {
+      // Try to find city (locality)
+      for (const result of data.results) {
+        const cityComponent = result.address_components?.find((component: any) =>
+          component.types.includes('locality')
+        )
+        if (cityComponent) {
+          console.log('Found city:', cityComponent.long_name)
+          return cityComponent.long_name
+        }
+      }
+
+      // Fallback to first result's formatted address (shortened)
+      const formatted = data.results[0].formatted_address
+      const parts = formatted.split(',')
+      console.log('Using formatted address:', parts[0])
+      return parts[0] || formatted
+    }
+
+    console.log('No results, returning coordinates')
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  } catch (error) {
+    console.error('Error in getCityFromCoordinates:', error)
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  }
 }
 
 /**
@@ -98,6 +134,15 @@ export async function searchNearbyRestaurants(
   try {
     const radiusMeters = milesToMeters(radiusMiles)
 
+    const excludedTypes = [
+            'primary_school',
+            'secondary_school',
+            'movie_theater',
+            'shopping_mall',
+            'grocery_store',
+            ...excludedCuisines,
+          ]
+
     // Use the new Google Places API (v1) with searchNearby endpoint
     const response = await fetch(
       `https://places.googleapis.com/v1/places:searchNearby`,
@@ -119,13 +164,7 @@ export async function searchNearbyRestaurants(
             },
           },
           includedTypes: ['restaurant'],
-          excludedTypes: [
-            'primary_school',
-            'secondary_school',
-            'movie_theater',
-            'shopping_mall',
-            'grocery_store',
-          ],
+          excludedTypes: excludedTypes,
           maxResultCount: 20,
           languageCode: 'en',
           rankPreference: 'DISTANCE',
@@ -168,19 +207,6 @@ export async function searchNearbyRestaurants(
           return false
         }
 
-        // Filter by excluded cuisines
-        if (excludedCuisines.length > 0) {
-          const restaurantNameLower = restaurant.name.toLowerCase()
-          // EXCLUDE restaurants that match any of the selected cuisines
-          if (
-            excludedCuisines.some((cuisine) =>
-              (CUISINE_KEYWORDS[cuisine] || []).some((keyword) => restaurantNameLower.includes(keyword))
-            )
-          ) {
-            return false
-          }
-        }
-
         return true
       })
 
@@ -197,21 +223,6 @@ export function filterByDistance(restaurants: Restaurant[], maxDistanceMiles: nu
   return restaurants.filter((r) => (r.distance || 0) <= maxDistanceMiles)
 }
 
-/**
- * Filter restaurants by cuisine type to EXCLUDE
- * Removes restaurants that match the selected cuisine keywords
- */
-export function filterByCuisine(restaurants: Restaurant[], excludedCuisines: string[]): Restaurant[] {
-  if (excludedCuisines.length === 0) return restaurants
-
-  return restaurants.filter((restaurant) => {
-    const restaurantNameLower = restaurant.name.toLowerCase()
-    // EXCLUDE restaurants that match any of the selected cuisines
-    return !excludedCuisines.some((cuisine) =>
-      (CUISINE_KEYWORDS[cuisine] || []).some((keyword) => restaurantNameLower.includes(keyword))
-    )
-  })
-}
 
 /**
  * Filter restaurants by minimum rating

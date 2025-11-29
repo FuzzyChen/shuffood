@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button } from '@mui/material'
 
 interface ControlButtonsProps {
   restaurantsCount: number
@@ -10,8 +10,6 @@ interface ControlButtonsProps {
 }
 
 export function ControlButtons({
-  restaurantsCount,
-  totalCount,
   loading,
   isShuffling,
   onSearch,
@@ -36,13 +34,6 @@ export function ControlButtons({
         {loading ? '🔍 Searching...' : isShuffling ? '🎲 Shuffling...' : '🎲 Find & Shuffle'}
       </Button>
 
-      {restaurantsCount > 0 && (
-        <>
-          <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
-            Found {restaurantsCount} of {totalCount} restaurants
-          </Typography>
-        </>
-      )}
     </Box>
   )
 }
