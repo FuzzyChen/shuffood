@@ -18,12 +18,12 @@ export function RatingFilter({ value, onChange }: RatingFilterProps) {
         size="small"
         sx={{
           backgroundColor: 'white',
-          borderRadius: 1,
+          borderRadius: 2,
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#ddd',
+            borderColor: '#FFE4D6',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#667eea',
+            borderColor: '#FF7E47',
           },
         }}
       >

@@ -19,13 +19,13 @@ export function DistanceFilter({ value, onChange }: DistanceFilterProps) {
         onChange={(_, newValue) => onChange(newValue as number)}
         sx={{
           '& .MuiSlider-thumb': {
-            backgroundColor: '#667eea',
+            backgroundColor: '#FF7E47',
           },
           '& .MuiSlider-track': {
-            background: 'linear-gradient(to right, #667eea, #764ba2)',
+            background: 'linear-gradient(to right, #FF7E47, #FF9A56)',
           },
           '& .MuiSlider-rail': {
-            backgroundColor: '#ddd',
+            backgroundColor: '#FFE4D6',
           },
         }}
       />

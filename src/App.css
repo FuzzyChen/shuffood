@@ -15,12 +15,12 @@ html, body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
   color: #333;
 }
 
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
   color: white;
   padding: 2rem;
   text-align: center;
@@ -83,7 +83,7 @@ html, body {
 
 .location-label {
   font-weight: bold;
-  color: #667eea;
+  color: #FF7E47;
   margin: 0 0 0.5rem 0;
   font-size: 0.95rem;
 }
@@ -131,7 +131,7 @@ html, body {
   width: 100%;
   padding: 0.5rem 0.75rem;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #FFE4D6;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
@@ -141,8 +141,8 @@ html, body {
 }
 
 .dropdown-toggle:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.02);
+  border-color: #FF7E47;
+  background: rgba(255, 126, 71, 0.02);
 }
 
 .dropdown-menu {
@@ -170,7 +170,7 @@ html, body {
 }
 
 .dropdown-item:hover {
-  background: rgba(102, 126, 234, 0.05);
+  background: rgba(255, 126, 71, 0.05);
 }
 
 .dropdown-item input[type="checkbox"] {
@@ -187,7 +187,7 @@ html, body {
 .rating-select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid #FFE4D6;
   border-radius: 6px;
   font-size: 0.85rem;
   color: #333;
@@ -206,7 +206,7 @@ html, body {
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(to right, #667eea, #764ba2);
+  background: linear-gradient(to right, #FF7E47, #FF9A56);
   outline: none;
   -webkit-appearance: none;
   appearance: none;
@@ -219,7 +219,7 @@ html, body {
   height: 20px;
   border-radius: 50%;
   background: white;
-  border: 3px solid #667eea;
+  border: 3px solid #FF7E47;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -229,7 +229,7 @@ html, body {
   height: 20px;
   border-radius: 50%;
   background: white;
-  border: 3px solid #667eea;
+  border: 3px solid #FF7E47;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -238,7 +238,7 @@ html, body {
   display: inline-block;
   min-width: 50px;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -271,33 +271,33 @@ html, body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
   color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 126, 71, 0.4);
 }
 
 .btn-shuffle {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
   color: white;
 }
 
 .btn-shuffle:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
 }
 
 .restaurant-card {
@@ -339,21 +339,21 @@ html, body {
   gap: 0.75rem;
   margin: 1rem 0;
   padding: 1rem;
-  background: #f9f9f9;
+  background: #FFF8F0;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #FF7E47;
 }
 
 .rating {
   font-size: 1.1rem;
   font-weight: bold;
-  color: #f5a623;
+  color: #FF9A56;
   margin: 0;
 }
 
 .distance {
   font-size: 1rem;
-  color: #667eea;
+  color: #FF7E47;
   margin: 0;
   font-weight: 500;
 }
@@ -424,8 +424,8 @@ html, body {
 }
 
 .restaurant-list-item.active {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  border-left-color: #38f9d7;
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
+  border-left-color: #FF9A56;
   color: white;
 }
 
@@ -442,7 +442,7 @@ html, body {
 }
 
 .list-item-number {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%);
   color: white;
   width: 28px;
   height: 28px;
@@ -464,7 +464,7 @@ html, body {
 }
 
 .list-item-distance {
-  color: #667eea;
+  color: #FF7E47;
   font-size: 0.85rem;
   margin: 0;
   font-weight: 600;
@@ -473,7 +473,7 @@ html, body {
 
 .list-item-rating {
   font-size: 0.8rem;
-  color: #f5a623;
+  color: #FF9A56;
   white-space: nowrap;
 }
 

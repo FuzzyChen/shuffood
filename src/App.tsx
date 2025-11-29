@@ -195,11 +195,11 @@ function App() {
 
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+    <Box sx={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(to bottom right, #FF7E47 0%, #FF9A56 50%, #FFB347 100%)' }}>
       {/* Header */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(to bottom right, #FF7E47 0%, #FF9A56 50%, #FFB347 100%)',
           color: 'white',
           py: 1.5,
           textAlign: 'center',
@@ -232,7 +232,7 @@ function App() {
 
           {/* Filters */}
           <Box>
-            <Paper sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Paper sx={{ p: 2.5, borderRadius: 4, backgroundColor: '#FFF8F0', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <DistanceFilter value={distanceRange} onChange={handleDistanceChange} />
               <RatingFilter value={minRating} onChange={handleRatingChange} />
               <CuisineFilter selectedCuisines={selectedCuisines} onToggle={handleCuisineToggle} />

@@ -23,6 +23,8 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
         maxWidth: 500,
         width: '100%',
         boxShadow: 4,
+        borderRadius: 4,
+        backgroundColor: '#FFF8F0',
         animation: 'slideIn 0.5s ease',
         '@keyframes slideIn': {
           from: {
@@ -56,10 +58,10 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: '#f9f9f9',
+            backgroundColor: '#FFF8F0',
             p: 1.5,
             borderRadius: 1,
-            borderLeft: '4px solid #667eea',
+            borderLeft: '4px solid #FF7E47',
             mb: 2,
           }}
         >

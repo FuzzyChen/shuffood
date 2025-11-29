@@ -28,10 +28,12 @@ export function CuisineFilter({ selectedCuisines, onToggle }: CuisineFilterProps
           textTransform: 'none',
           fontSize: '0.85rem',
           color: '#333',
-          borderColor: '#ddd',
+          borderColor: '#FFE4D6',
+          borderRadius: 2,
+          backgroundColor: 'white',
           '&:hover': {
-            borderColor: '#667eea',
-            backgroundColor: 'rgba(102, 126, 234, 0.02)',
+            borderColor: '#FF7E47',
+            backgroundColor: 'rgba(255, 126, 71, 0.02)',
           },
         }}
       >
@@ -43,6 +45,8 @@ export function CuisineFilter({ selectedCuisines, onToggle }: CuisineFilterProps
           sx={{
             mt: 1,
             p: 2,
+            borderRadius: 3,
+            backgroundColor: 'white',
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: 1,

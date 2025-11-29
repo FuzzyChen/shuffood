@@ -23,12 +23,13 @@ export function ControlButtons({
         fullWidth
         sx={{
           maxWidth: 300,
-          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          background: 'linear-gradient(135deg, #FF5722 0%, #FF7043 100%)',
           color: 'white',
           textTransform: 'none',
           fontWeight: 'bold',
           py: 1.5,
           fontSize: '1rem',
+          borderRadius: 4,
         }}
       >
         {loading ? '🔍 Searching...' : isShuffling ? '🎲 Shuffling...' : '🎲 Find & Shuffle'}

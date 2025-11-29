@@ -22,6 +22,8 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
           maxHeight: 400,
           overflowY: 'auto',
           p: 1,
+          borderRadius: 4,
+          backgroundColor: '#FFF8F0',
         }}
       >
         <List sx={{ p: 0 }}>
@@ -31,17 +33,17 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
                 onClick={() => onSelect(restaurant)}
                 selected={selectedRestaurant?.place_id === restaurant.place_id}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 2,
                   mb: 0.5,
                   backgroundColor:
                     selectedRestaurant?.place_id === restaurant.place_id
-                      ? 'rgba(67, 233, 123, 0.2)'
+                      ? 'rgba(255, 126, 71, 0.2)'
                       : 'transparent',
                   '&:hover': {
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    backgroundColor: 'rgba(255, 126, 71, 0.1)',
                   },
                   '&.Mui-selected': {
-                    background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                    background: 'linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%)',
                     color: 'white',
                   },
                 }}
@@ -49,7 +51,7 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                   <Box
                     sx={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #FF7E47 0%, #FF9A56 100%)',
                       color: 'white',
                       width: 28,
                       height: 28,
@@ -80,7 +82,7 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
                       <Typography
                         variant="caption"
                         sx={{
-                          color: selectedRestaurant?.place_id === restaurant.place_id ? 'white' : '#667eea',
+                          color: selectedRestaurant?.place_id === restaurant.place_id ? 'white' : '#FF7E47',
                           fontWeight: 600,
                         }}
                       >
@@ -91,7 +93,7 @@ export function RestaurantList({ restaurants, selectedRestaurant, onSelect }: Re
                       <Typography
                         variant="caption"
                         sx={{
-                          color: selectedRestaurant?.place_id === restaurant.place_id ? 'white' : '#f5a623',
+                          color: selectedRestaurant?.place_id === restaurant.place_id ? 'white' : '#FF9A56',
                         }}
                       >
                         ⭐ {restaurant.rating.toFixed(1)}
